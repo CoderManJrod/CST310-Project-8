@@ -93,7 +93,7 @@ project8/
 
 ## Video Demo
 
-[Insert Loom / YouTube / Vimeo link here]
+https://youtu.be/N7ddLx0xwHw
 
 ---
 
