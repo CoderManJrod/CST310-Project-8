@@ -1,6 +1,6 @@
 # Project 8 — Pac-Man 2.5D: A Playable OpenGL Demo Scene
 
-**Course:** CST-310 — Computer Graphics and Visualization
+**Course:** CST-310 — Computer Graphics Lecture & Lab
 **Institution:** Grand Canyon University
 **Authors:** Jared Walker & James Hohn
 **Instructor:** Ricardo Citro
