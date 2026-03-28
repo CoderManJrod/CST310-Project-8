@@ -1,0 +1,67 @@
+=====================================================
+  Project 8 — Pac-Man 2.5D
+  Course: CST-310 Computer Graphics | Grand Canyon University
+  Authors: Jared Walker & James Hohn
+  Instructor: Ricardo Citro
+  Date: March 28, 2026
+=====================================================
+
+------------------------------------------------------
+SOFTWARE REQUIREMENTS
+------------------------------------------------------
+- Operating System : Ubuntu 22.04 LTS or later
+- Compiler         : g++ with C++17 support
+- OpenGL           : Mesa OpenGL or hardware-accelerated OpenGL
+- GLUT             : FreeGLUT
+- GLU              : libglu1-mesa
+
+------------------------------------------------------
+INSTALL DEPENDENCIES
+------------------------------------------------------
+Run the following in a terminal:
+
+  sudo apt install build-essential freeglut3-dev libglu1-mesa-dev -y
+
+------------------------------------------------------
+COMPILE
+------------------------------------------------------
+  g++ pacman.cpp -o pacman -lGL -lGLU -lglut -std=c++17
+
+------------------------------------------------------
+RUN
+------------------------------------------------------
+  ./pacman
+
+------------------------------------------------------
+CONTROLS
+------------------------------------------------------
+  Arrow Keys  - Move Pac-Man
+  R           - Restart the game
+  ESC         - Quit
+
+------------------------------------------------------
+GAMEPLAY NOTES
+------------------------------------------------------
+- Eat all pellets to win.
+- Avoid ghosts or lose a life (3 lives total).
+- Eat a power pellet (large glowing dot) to turn
+  ghosts blue. Blue ghosts can be eaten for 200 pts.
+- Ghosts release from the house every 10 seconds.
+- Each ghost has a unique AI personality:
+    Red    - targets behind Pac-Man
+    Orange - moves randomly
+    Blue   - targets ahead of Pac-Man
+    Pink   - directly chases Pac-Man
+- Score: 10 pts per pellet, 50 pts per power pellet,
+  200 pts per ghost eaten while frightened.
+
+------------------------------------------------------
+NOTES
+------------------------------------------------------
+- No external image files or shaders are required.
+- No additional libraries beyond OpenGL, GLU,
+  and FreeGLUT are needed.
+- Screenshots are located in the screenshots/ folder.
+- GitHub repository: [Your GitHub URL here]
+- Video demo: [Your Loom/YouTube/Vimeo URL here]
+=====================================================
