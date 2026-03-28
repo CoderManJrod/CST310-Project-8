@@ -21,7 +21,7 @@
 #include <string>
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const int   COLS = 19, ROWS = 21;
+const int   COLS = 19, ROWS = 22;
 const float CS   = 1.0f;
 const float WALL_H = 0.55f;
 const float PI = 3.14159265f;
@@ -49,7 +49,8 @@ int mazeBase[ROWS][COLS] = {
     {1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1},
     {1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1},
     {1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,0,1},
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1},
+    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
 
 int maze[ROWS][COLS];
@@ -64,10 +65,10 @@ struct Entity {
 Entity pac;
 Entity ghosts[4];
 float  ghostColors[4][3] = {
-    {1.0f, 0.0f, 0.0f},
-    {1.0f, 0.7f, 0.85f},
-    {0.0f, 1.0f, 1.0f},
-    {1.0f, 0.6f, 0.1f}
+    {1.0f, 0.0f, 0.0f},   // Red   
+    {1.0f, 0.6f, 0.1f},   // Orange 
+    {0.0f, 1.0f, 1.0f},   // Blue  
+    {1.0f, 0.7f, 0.85f}   // Pink  
 };
 
 // ─── Ghost state machine ─────────────────────────────────────────────────────
@@ -550,8 +551,10 @@ void updateGhostHouse(int i, float dt) {
 }
 
 // ─── Ghost active movement ───────────────────────────────────────────────────
+// ─── Ghost active movement ───────────────────────────────────────────────────
 void moveGhost(int i) {
-    if (ghostState[i] != GHOST_ACTIVE) return;
+    // Only move active or frightened ghosts
+    if (ghostState[i] != GHOST_ACTIVE && ghostState[i] != frightened) return;
 
     int dirs[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
 
@@ -561,30 +564,93 @@ void moveGhost(int i) {
     int targetX = pac.gx;
     int targetY = pac.gy;
 
+    // ─── FRIGHTENED MODE FOR ALL GHOSTS ───
+    if (ghostState[i] == frightened && ghostHouseTimer[i] >= ghostReleaseDelay[i]) {
+        std::vector<int> options;
+        float bestDist = -1.0f; // move to increase distance from Pacman
+
+        for (int d = 0; d < 4; d++) {
+            int nx = ghosts[i].gx + dirs[d][0];
+            int ny = ghosts[i].gy + dirs[d][1];
+
+            if (nx < 0) nx = COLS - 1;
+            if (nx >= COLS) nx = 0;
+
+            if (!isPassable(nx, ny) || maze[ny][nx] == 4) continue;
+            if (dirs[d][0] == -ghosts[i].dx && dirs[d][1] == -ghosts[i].dy) continue;
+
+            float dist = (nx - pac.gx)*(nx - pac.gx) + (ny - pac.gy)*(ny - pac.gy);
+            if (dist > bestDist) {
+                bestDist = dist;
+                options.clear();
+                options.push_back(d);
+            } else if (dist == bestDist) {
+                options.push_back(d);
+            }
+        }
+
+        if (!options.empty()) {
+            int r = options[rand() % options.size()];
+            ghosts[i].dx = dirs[r][0];
+            ghosts[i].dy = dirs[r][1];
+        }
+
+        ghosts[i].gx += ghosts[i].dx;
+        ghosts[i].gy += ghosts[i].dy;
+
+        // Wraparound
+        if (ghosts[i].gx < 0) ghosts[i].gx = COLS - 1;
+        if (ghosts[i].gx >= COLS) ghosts[i].gx = 0;
+
+        return; // done for frightened ghosts
+    }
+
     // ─── PERSONALITIES ───
-    if (i == 0) {
-        // RED → behind Pacman
+    if (i == 0) { // 🔴 RED → chase behind Pacman
         targetX = pac.gx - curDx * 2;
         targetY = pac.gy - curDy * 2;
-    }
-    else if (i == 1) {
-        // ORANGE → random
-        int r = rand() % 4;
-        ghosts[i].dx = dirs[r][0];
-        ghosts[i].dy = dirs[r][1];
+    } 
+    else if (i == 1) { // 🟠 ORANGE → random at intersections
+        std::vector<int> options;
+        for (int d = 0; d < 4; d++) {
+            int tx = ghosts[i].gx + dirs[d][0];
+            int ty = ghosts[i].gy + dirs[d][1];
+
+            if (tx < 0) tx = COLS - 1;
+            if (tx >= COLS) tx = 0;
+
+            if (isPassable(tx, ty) && maze[ty][tx] != 4) {
+                if (dirs[d][0] != -ghosts[i].dx || dirs[d][1] != -ghosts[i].dy) {
+                    options.push_back(d);
+                }
+            }
+        }
+
+        if (!options.empty()) {
+            int r = options[rand() % options.size()];
+            ghosts[i].dx = dirs[r][0];
+            ghosts[i].dy = dirs[r][1];
+        }
+
+        ghosts[i].gx += ghosts[i].dx;
+        ghosts[i].gy += ghosts[i].dy;
+
+        // Wraparound
+        if (ghosts[i].gx < 0) ghosts[i].gx = COLS - 1;
+        if (ghosts[i].gx >= COLS) ghosts[i].gx = 0;
+
         return;
     }
-    else if (i == 2) {
-        // BLUE → ahead of Pacman
+    else if (i == 2) { // 🔵 BLUE → ahead of Pacman
         targetX = pac.gx + curDx * 2;
         targetY = pac.gy + curDy * 2;
     }
-    else if (i == 3) {
-        // PINK → direct chase
+    else if (i == 3) { // 🟣 PINK → direct chase
         targetX = pac.gx;
         targetY = pac.gy;
     }
 
+    // ─── Standard chasing logic for Red, Blue, Pink ───
     float bestDist = 1e9;
 
     for (int d = 0; d < 4; d++) {
@@ -596,8 +662,7 @@ void moveGhost(int i) {
 
         if (!isPassable(nx, ny) || maze[ny][nx] == 4) continue;
 
-        float dist = (nx - targetX)*(nx - targetX) +
-                     (ny - targetY)*(ny - targetY);
+        float dist = (nx - targetX)*(nx - targetX) + (ny - targetY)*(ny - targetY);
 
         if (dist < bestDist) {
             bestDist = dist;
@@ -676,7 +741,7 @@ void timer(int) {
         // Pac-Man moves every 6 frames
         if (moveCounter % 6 == 0) movePacman();
 
-        // Active ghosts move every 8 frames
+        // Active ghosts move every 5 frames
         if (moveCounter % 8 == 0) {
             for (int i = 0; i < 4; i++) moveGhost(i);
         }
